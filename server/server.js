@@ -103,6 +103,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Root URL friendly message
+app.get('/', (req, res) => {
+  res.send('EV Pulse API Server is up and running! Please use /api for endpoints.');
+});
+
 // ─── Error Handler (must be after routes) ───────────────────────────────────────
 app.use(errorHandler);
 
