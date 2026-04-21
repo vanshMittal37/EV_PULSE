@@ -17,7 +17,7 @@ const Navbar = () => {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-8">
-            <NavLink to="/" className={({isActive}) => isActive ? "text-emerald-400 font-medium" : "text-gray-300 hover:text-white transition-colors"}>Dashboard</NavLink>
+            <NavLink to="/dashboard" className={({isActive}) => isActive ? "text-emerald-400 font-medium" : "text-gray-300 hover:text-white transition-colors"}>Dashboard</NavLink>
             <NavLink to="/stations" className={({isActive}) => isActive ? "text-emerald-400 font-medium" : "text-gray-300 hover:text-white transition-colors"}>Charging Stations</NavLink>
             <NavLink to="/services" className={({isActive}) => isActive ? "text-emerald-400 font-medium" : "text-gray-300 hover:text-white transition-colors"}>Service Hubs</NavLink>
           </div>

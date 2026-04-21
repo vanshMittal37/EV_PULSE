@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -26,7 +26,8 @@ function App() {
 
           {/* Main App Routes - With Navbar */}
           <Route element={<MainLayout />}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/stations" element={<div className="p-8 text-center text-white"><h1 className="text-3xl font-bold">Charging Stations Placeholder</h1></div>} />
             <Route path="/services" element={<div className="p-8 text-center text-white"><h1 className="text-3xl font-bold">Services Placeholder</h1></div>} />
             {/* Admins & Vendor Dashboards Placeholders */}
