@@ -28,10 +28,24 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, 'Business name cannot exceed 100 characters'],
     },
+    gstNumber: {
+      type: String,
+      trim: true,
+    },
+    address: {
+      type: String,
+      trim: true,
+    },
     contactNumber: {
       type: String,
       trim: true,
     },
+    documents: [
+      {
+        name: String,
+        url: String,
+      }
+    ],
     role: {
       type: String,
       enum: {
@@ -43,7 +57,7 @@ const userSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: {
-        values: ['PENDING', 'ACTIVE'],
+        values: ['PENDING', 'ACTIVE', 'REJECTED', 'SUSPENDED'],
         message: '{VALUE} is not a valid status',
       },
       default: 'PENDING',
@@ -55,11 +69,10 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // Compare entered password with hashed password

@@ -7,24 +7,24 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Basic mock initialization for now
     const token = localStorage.getItem('token');
-    if (token) {
-      // Decode and verify logic would be here
-      setUser({ name: 'Test User', role: 'USER' });
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser) {
+      setUser(JSON.parse(storedUser));
     }
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    // API Call goes here
-    setUser({ name: 'Test User', role: 'USER' });
-    localStorage.setItem('token', 'mock_token');
+  const login = async (email, password, token, userData) => {
+    setUser(userData);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   return (

@@ -93,6 +93,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ─── API Routes ─────────────────────────────────────────────────────────────────
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
