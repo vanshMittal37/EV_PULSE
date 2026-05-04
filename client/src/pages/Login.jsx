@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldCheck, BatteryCharging, Wrench, EyeOff, Eye, Mail, Lock } from 'lucide-react';
+import { ShieldCheck, BatteryCharging, Wrench, EyeOff, Eye, Mail, Lock, User, Zap } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
 const Login = () => {
@@ -21,7 +21,7 @@ const Login = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, role: activeTab }),
       });
       
       const data = await response.json();
@@ -35,8 +35,9 @@ const Login = () => {
       const role = data.data.role;
       if (role === 'SUPER_ADMIN') navigate('/admin/dashboard');
       else if (role === 'STATION_VENDOR') navigate('/vendor/charging-dashboard');
-      else if (role === 'SERVICE_VENDOR') navigate('/vendor/service-dashboard');
-      else if (role === 'HYBRID_VENDOR') navigate('/vendor/hybrid-dashboard');
+      else if (role === 'SERVICE_VENDOR') navigate('/service/dashboard');
+      else if (role === 'HYBRID_VENDOR') navigate('/hybrid/dashboard');
+      else if (role === 'TECHNICIAN') navigate('/technician/dashboard');
       else navigate('/'); 
       
     } catch (err) {
@@ -50,6 +51,8 @@ const Login = () => {
     { id: 'SUPER_ADMIN', label: 'SUPER ADMIN', icon: ShieldCheck },
     { id: 'STATION_VENDOR', label: 'CHARGING VENDOR', icon: BatteryCharging },
     { id: 'SERVICE_VENDOR', label: 'SERVICE VENDOR', icon: Wrench },
+    { id: 'HYBRID_VENDOR', label: 'HYBRID VENDOR', icon: Zap },
+    { id: 'TECHNICIAN', label: 'TECHNICIAN', icon: User },
   ];
 
   return (
@@ -95,7 +98,7 @@ const Login = () => {
         <div className="w-full md:w-7/12 p-8 md:p-12 relative flex flex-col justify-center">
           
           {/* Role Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (

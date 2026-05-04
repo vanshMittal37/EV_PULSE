@@ -1,10 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import VendorDocumentUpload from './pages/VendorDocumentUpload';
 import VendorManagement from './pages/VendorManagement';
 import StationNetwork from './pages/StationNetwork';
 import ServiceCenters from './pages/ServiceCenters';
@@ -13,16 +12,28 @@ import GlobalPayments from './pages/GlobalPayments';
 import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
 import AdminLayout from './components/Dashboard/AdminLayout';
+import VendorLayout from './components/Dashboard/VendorLayout';
+import VendorChargingDashboard from './pages/VendorChargingDashboard';
+import VendorPortManagement from './pages/VendorPortManagement';
+import VendorSessionHistory from './pages/VendorSessionHistory';
+import VendorEarnings from './pages/VendorEarnings';
+import VendorProfileManagement from './pages/VendorProfileManagement';
+import VendorSettings from './pages/VendorSettings';
+import ServiceLayout from './components/Dashboard/ServiceLayout';
+import ServiceDashboard from './pages/ServiceDashboard';
+import ServiceJobCards from './pages/ServiceJobCards';
+import ServiceTechnicians from './pages/ServiceTechnicians';
+import ServiceBilling from './pages/ServiceBilling';
+import ServiceFeedback from './pages/ServiceFeedback';
+import ServiceSOS from './pages/ServiceSOS';
+import ServiceSettings from './pages/ServiceSettings';
+import TechnicianDashboard from './pages/TechnicianDashboard';
+import HybridLayout from './components/Dashboard/HybridLayout';
+import HybridDashboard from './pages/HybridDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
-const MainLayout = () => (
-  <div className="min-h-screen bg-ev-dark text-white font-sans bg-gray-900 flex flex-col">
-    <Navbar />
-    <main className="flex-1 w-full flex flex-col justify-center">
-      <Outlet />
-    </main>
-  </div>
-);
+
 
 function App() {
   return (
@@ -32,30 +43,80 @@ function App() {
           {/* Auth Routes - No Navbar */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/upload-document" element={<VendorDocumentUpload />} />
 
-          {/* Super Admin Dashboard - Nested under AdminLayout */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<SuperAdminDashboard />} />
-            <Route path="vendors" element={<VendorManagement />} />
-            <Route path="network" element={<StationNetwork />} />
-            <Route path="services" element={<ServiceCenters />} />
-            <Route path="sos" element={<EmergencySOS />} />
-            <Route path="payments" element={<GlobalPayments />} />
-            <Route path="users"    element={<UserManagement />} />
-            <Route path="settings" element={<SystemSettings />} />
+          {/* Super Admin Dashboard */}
+          <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<SuperAdminDashboard />} />
+              <Route path="vendors" element={<VendorManagement />} />
+              <Route path="network" element={<StationNetwork />} />
+              <Route path="services" element={<ServiceCenters />} />
+              <Route path="sos" element={<EmergencySOS />} />
+              <Route path="payments" element={<GlobalPayments />} />
+              <Route path="users"    element={<UserManagement />} />
+              <Route path="settings" element={<SystemSettings />} />
+            </Route>
           </Route>
 
-          {/* Main App Routes - With Navbar */}
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/stations" element={<div className="p-8 text-center text-white"><h1 className="text-3xl font-bold">Charging Stations Placeholder</h1></div>} />
-            <Route path="/services" element={<div className="p-8 text-center text-white"><h1 className="text-3xl font-bold">Services Placeholder</h1></div>} />
-            {/* Admins & Vendor Dashboards Placeholders */}
-            <Route path="/vendor/charging-dashboard" element={<div className="p-8 text-center text-white"><h1 className="text-3xl font-bold">Charging Station Vendor Portal</h1></div>} />
-            <Route path="/vendor/service-dashboard" element={<div className="p-8 text-center text-white"><h1 className="text-3xl font-bold">Service Center Vendor Portal</h1></div>} />
-            <Route path="/vendor/hybrid-dashboard" element={<div className="p-8 text-center text-white"><h1 className="text-3xl font-bold">Hybrid Vendor Portal</h1></div>} />
+          {/* Main App Routes - Redirect all guest access to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
+
+          {/* ── Vendor Dashboard Layout ─────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['STATION_VENDOR']} />}>
+            <Route path="/vendor" element={<VendorLayout />}>
+              <Route index element={<Navigate to="/vendor/charging-dashboard" replace />} />
+              <Route path="charging-dashboard" element={<VendorChargingDashboard />} />
+              <Route path="ports"    element={<VendorPortManagement />} />
+              <Route path="sessions" element={<VendorSessionHistory />} />
+              <Route path="earnings" element={<VendorEarnings />} />
+              <Route path="profile"  element={<VendorProfileManagement />} />
+              <Route path="settings" element={<VendorSettings />} />
+            </Route>
+          </Route>
+
+          {/* ── Service Center Layout ─────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['SERVICE_VENDOR']} />}>
+            <Route path="/service" element={<ServiceLayout />}>
+              <Route index element={<Navigate to="/service/dashboard" replace />} />
+              <Route path="dashboard" element={<ServiceDashboard />} />
+              <Route path="jobs" element={<ServiceJobCards />} />
+              <Route path="technicians" element={<ServiceTechnicians />} />
+              <Route path="billing" element={<ServiceBilling />} />
+              <Route path="feedback" element={<ServiceFeedback />} />
+              <Route path="sos" element={<ServiceSOS />} />
+              <Route path="settings" element={<ServiceSettings />} />
+            </Route>
+          </Route>
+
+          {/* ── Hybrid Vendor Portal ──────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['HYBRID_VENDOR']} />}>
+            <Route path="/hybrid" element={<HybridLayout />}>
+              <Route index element={<Navigate to="/hybrid/dashboard" replace />} />
+              <Route path="dashboard" element={<HybridDashboard />} />
+              <Route path="earnings" element={<VendorEarnings />} />
+              <Route path="feedback" element={<ServiceFeedback />} />
+              <Route path="service-bays" element={<ServiceDashboard />} />
+              <Route path="jobs" element={<ServiceJobCards />} />
+              <Route path="technicians" element={<ServiceTechnicians />} />
+              <Route path="billing" element={<ServiceBilling />} />
+              <Route path="sos" element={<ServiceSOS />} />
+              <Route path="ports" element={<VendorPortManagement />} />
+              <Route path="sessions" element={<VendorSessionHistory />} />
+              <Route path="settings" element={<ServiceSettings />} />
+            </Route>
+          </Route>
+          
+          {/* Legacy Redirects */}
+          <Route path="/vendor/hybrid-dashboard"  element={<Navigate to="/hybrid/dashboard" replace />} />
+          <Route path="/vendor/service-dashboard" element={<Navigate to="/service/dashboard" replace />} />
+          
+          {/* ── Technician Dashboard ─────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['TECHNICIAN']} />}>
+            <Route path="/technician/dashboard" element={<TechnicianDashboard />} />
           </Route>
         </Routes>
       </Router>

@@ -125,7 +125,7 @@ const GlobalPayments = () => {
   };
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen font-['Inter']">
+    <div className="p-4 sm:p-8 bg-slate-50 min-h-screen font-['Inter']">
 
       {/* ── Page Header ───────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8">
@@ -150,7 +150,7 @@ const GlobalPayments = () => {
       </div>
 
       {/* ── Stat Cards ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <StatCard icon={TrendingUp}   label="Gross Platform Volume"   value="₹1,45,23,000" sub="Lifetime processed"           color="bg-emerald-500" trend="+12.4%" />
         <StatCard icon={IndianRupee}  label="Net Platform Fees"       value="₹8,71,380"    sub="~6% avg commission"           color="bg-blue-500"    trend="+8.1%"  />
         <StatCard icon={Clock}        label="Pending Vendor Payouts"  value="₹10,12,850"   sub="6 vendors awaiting release"   color="bg-amber-500"               />
@@ -158,7 +158,7 @@ const GlobalPayments = () => {
       </div>
 
       {/* ── Charts Row ────────────────────────────────────────────────── */}
-      <div className="flex gap-5 mb-8">
+      <div className="flex flex-col lg:flex-row gap-5 mb-8">
         {/* Area Chart */}
         <div className="flex-[6] bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-6">
@@ -250,7 +250,7 @@ const GlobalPayments = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100 bg-slate-50/70">
-                {['Transaction ID', 'Date / Time', 'Vendor Name', 'Customer', 'Amount', 'Platform Fee', 'Method', 'Status'].map(h => (
+                {['Transaction ID', 'Date / Time', 'Vendor / Station', 'Customer', 'Amount', 'Platform Fee', 'Method', 'Status'].map(h => (
                   <th key={h} className="px-5 py-3.5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{h}</th>
                 ))}
               </tr>
@@ -260,7 +260,13 @@ const GlobalPayments = () => {
                 <tr key={t.id} className="hover:bg-slate-50/60 transition-colors">
                   <td className="px-5 py-4 text-sm font-black text-gray-900 font-mono">{t.id}</td>
                   <td className="px-5 py-4 text-xs font-bold text-gray-500">{t.date}</td>
-                  <td className="px-5 py-4 text-sm font-bold text-gray-800">{t.vendor}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span className="text-sm font-black text-gray-800">{t.vendor}</span>
+                    </div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5 pl-3">Vendor · Station</p>
+                  </td>
                   <td className="px-5 py-4 text-sm font-bold text-gray-700">{t.customer}</td>
                   <td className="px-5 py-4 text-sm font-black text-gray-900">{fmtCurrency(t.amount)}</td>
                   <td className="px-5 py-4 text-sm font-black text-emerald-600">{fmtCurrency(t.fee)}</td>
@@ -294,7 +300,7 @@ const GlobalPayments = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[620px] bg-white rounded-3xl shadow-2xl z-[1001] overflow-hidden"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-2xl bg-white rounded-3xl shadow-2xl z-[1001] overflow-hidden"
             >
               {/* Modal Header */}
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/80">

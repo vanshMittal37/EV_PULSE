@@ -17,7 +17,7 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-const Sidebar = ({ pendingApprovals = 112 }) => {
+const Sidebar = ({ pendingApprovals = 0, onItemClick }) => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Vendor Management', path: '/admin/vendors', badge: pendingApprovals },
@@ -45,6 +45,7 @@ const Sidebar = ({ pendingApprovals = 112 }) => {
           <NavLink
             key={index}
             to={item.path}
+            onClick={() => onItemClick?.()}
             className={({ isActive }) => cn(
               "w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-300 group relative",
               isActive 

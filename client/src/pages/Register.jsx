@@ -23,25 +23,11 @@ const Register = () => {
     setError('');
     setLoading(true);
     
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      setSuccess(true);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    // We don't save to database yet as per user request.
+    // Account is only created in the next step (Document Upload).
+    sessionStorage.setItem('pending_registration', JSON.stringify(formData));
+    navigate('/upload-document');
+    setLoading(false);
   };
 
   const roleOptions = [

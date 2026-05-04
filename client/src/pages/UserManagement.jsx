@@ -138,7 +138,7 @@ const UserManagement = () => {
   const totalTickets = users.reduce((acc, u) => acc + u.tickets, 0);
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen font-['Inter'] relative">
+    <div className="p-4 sm:p-8 bg-slate-50 min-h-screen font-['Inter'] relative">
 
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8">
@@ -155,7 +155,7 @@ const UserManagement = () => {
       </div>
 
       {/* ── Stat Cards ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <StatCard icon={Users}       label="Total Registered Drivers" value={fmt(28451)}   sub="All time signups"       color="bg-emerald-500" />
         <StatCard icon={Zap}         label="Active Now"                value={fmt(1842)}    sub="Using the app live"     color="bg-blue-500"    pulse />
         <StatCard icon={UserPlus}    label="New Sign-ups Today"        value="+142"         sub="Since 12:00 AM"         color="bg-violet-500"  />
@@ -291,7 +291,7 @@ const UserManagement = () => {
             <motion.div
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-              className="fixed top-0 right-0 bottom-0 w-[440px] bg-white shadow-2xl z-[1001] flex flex-col border-l border-gray-200"
+              className="fixed top-0 right-0 bottom-0 w-full sm:w-[440px] bg-white shadow-2xl z-[1001] flex flex-col border-l border-gray-200"
             >
               {/* Header */}
               <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-slate-50/80 shrink-0">

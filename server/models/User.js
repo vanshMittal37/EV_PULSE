@@ -46,10 +46,32 @@ const userSchema = new mongoose.Schema(
         url: String,
       }
     ],
+    // ── Station fields (1:1 with Vendor) ──────────────────────────────
+    // For STATION_VENDOR and HYBRID_VENDOR roles, each vendor IS one station.
+    // businessName is used as the station name.
+    numberOfPorts: {
+      type: Number,
+      default: 2,
+      min: 1,
+    },
+    portTypes: {
+      type: [String],  // e.g. ['CCS2', 'Type 2']
+      default: ['Type 2'],
+    },
+    stationStatus: {
+      type: String,
+      enum: ['Active', 'Offline', 'Maintenance'],
+      default: 'Offline', // Goes Active only when vendor is ACTIVE
+    },
+    locationCoordinates: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+    },
+    // ─────────────────────────────────────────────────────────────────
     role: {
       type: String,
       enum: {
-        values: ['SUPER_ADMIN', 'STATION_VENDOR', 'SERVICE_VENDOR', 'HYBRID_VENDOR', 'USER'],
+        values: ['SUPER_ADMIN', 'STATION_VENDOR', 'SERVICE_VENDOR', 'HYBRID_VENDOR', 'USER', 'TECHNICIAN'],
         message: '{VALUE} is not a valid role',
       },
       default: 'USER',
@@ -61,6 +83,55 @@ const userSchema = new mongoose.Schema(
         message: '{VALUE} is not a valid status',
       },
       default: 'PENDING',
+    },
+    // Technician-specific fields
+    vendorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    specialization: {
+      type: String,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Description cannot exceed 500 characters'],
+    },
+    amenities: {
+      type: [String],
+      default: [],
+    },
+    is24x7: {
+      type: Boolean,
+      default: true,
+    },
+    schedule: {
+      type: Map,
+      of: {
+        open: String,
+        close: String
+      },
+      default: {}
+    },
+    stationImages: {
+      type: [String],
+      default: [],
+    },
+    taxId: {
+      type: String,
+      trim: true,
+    },
+    bankDetails: {
+      bankName: String,
+      accountNumber: String,
+      ifscCode: String,
+      accountHolder: String,
+    },
+    techLevel: {
+      type: String,
+      enum: ['Junior', 'Senior'],
     },
   },
   {

@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Search, Bell, LogOut, ChevronDown, User, Menu } from 'lucide-react';
+import { AuthContext } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import LogoutConfirmModal from '../LogoutConfirmModal';
 
-const Header = ({ onMenuClick }) => {
+const Header = ({ onMenuClick, onLogoutClick, searchQuery, setSearchQuery }) => {
   return (
     <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-40 shadow-sm backdrop-blur-md bg-white/80">
       {/* Search Bar */}
@@ -17,6 +20,8 @@ const Header = ({ onMenuClick }) => {
           <input
             type="text"
             placeholder="Search for users, charging stations, or alerts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-4 focus:ring-[#10b981]/10 focus:border-[#10b981] focus:bg-white transition-all text-sm font-bold text-gray-900 placeholder:text-gray-400 placeholder:font-medium tabular-nums shadow-sm"
           />
         </div>
@@ -51,7 +56,10 @@ const Header = ({ onMenuClick }) => {
             
             {/* Simple Dropdown Menu (Hidden by default) */}
             <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-              <button className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors rounded-xl">
+              <button 
+                onClick={onLogoutClick}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors rounded-xl"
+              >
                 <LogOut className="w-4 h-4" />
                 <span className="font-semibold">Logout</span>
               </button>

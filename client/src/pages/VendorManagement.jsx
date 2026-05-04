@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { socket } from '../utils/socket';
 // API Client for Vendor Audits
 import axios from 'axios';
+import { useOutletContext } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -13,28 +15,51 @@ import {
   Layers,
   ChevronRight,
   Download,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  PlusCircle,
+  Loader2
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import VendorDetailsModal from '../components/Dashboard/VendorDetailsModal';
+import RegisterVendorModal from '../components/Dashboard/RegisterVendorModal';
 
 const VendorManagement = () => {
+  const { searchQuery, setSearchQuery } = useOutletContext();
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('PENDING');
-  const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [isRegisterModalOpen, setRegisterModalOpen] = useState(false);
 
   useEffect(() => {
     fetchVendors();
   }, []);
 
+  useEffect(() => {
+    socket.on('new-vendor', (newVendor) => {
+      console.log('Real-time: New vendor registered:', newVendor);
+      // Immediately add the new vendor to the top of the list
+      setVendors(prev => [newVendor, ...prev]);
+      
+      // Optionally show a toast
+      toast.success(`New Vendor Registered: ${newVendor.businessName}`, {
+        icon: '🚀',
+        style: { borderRadius: '1rem', background: '#0f172a', color: '#fff' }
+      });
+    });
+
+    return () => {
+      socket.off('new-vendor');
+    };
+  }, []);
+
   const fetchVendors = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const res = await axios.get('http://localhost:5000/api/admin/vendors', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -48,7 +73,7 @@ const VendorManagement = () => {
 
   const handleStatusUpdate = async (id, status) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.put(`http://localhost:5000/api/admin/vendors/${id}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -77,8 +102,32 @@ const VendorManagement = () => {
     }
   };
 
+  const handleDeleteVendor = async (id) => {
+    if (!window.confirm('Are you absolutely sure you want to PERMANENTLY remove this vendor from the database? This action cannot be undone.')) return;
+    
+    try {
+      const token = sessionStorage.getItem('token');
+      await axios.delete(`http://localhost:5000/api/admin/vendors/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success('Vendor permanently removed', {
+        style: { borderRadius: '1rem', background: '#0f172a', color: '#fff' }
+      });
+
+      fetchVendors();
+      setModalOpen(false);
+    } catch (error) {
+      toast.error('Deletion failed');
+    }
+  };
+
   const filteredVendors = vendors.filter(vendor => {
-    const matchesTab = activeTab === 'ALL' ? true : vendor.status === activeTab;
+    // When on the 'ALL' tab, show everything EXCEPT rejected vendors
+    const matchesTab = activeTab === 'ALL' 
+      ? vendor.status !== 'REJECTED' 
+      : vendor.status === activeTab;
+
     const matchesSearch =
       vendor.businessName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vendor.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -88,22 +137,40 @@ const VendorManagement = () => {
     return matchesTab && matchesSearch && matchesType;
   });
 
-  const getRoleBadge = (role) => {
+  const getRoleBadge = (role, vendor) => {
     const baseClass = "px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2.5 shadow-sm border";
     switch (role) {
-      case 'STATION_VENDOR':
-        return <span className={`${baseClass} bg-blue-50 text-blue-600 border-blue-100/50`}><Zap className="w-3.5 h-3.5" /> Charging Hub</span>;
+      case 'STATION_VENDOR': {
+        // Show port count for 1:1 station-vendor clarity
+        const ports = vendor?.numberOfPorts || 2;
+        return (
+          <div className="flex flex-col gap-1.5">
+            <span className={`${baseClass} bg-blue-50 text-blue-600 border-blue-100/50`}>
+              <Zap className="w-3.5 h-3.5" /> Charging – {ports} Port{ports > 1 ? 's' : ''}
+            </span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">1 Station · 1 Vendor</span>
+          </div>
+        );
+      }
       case 'SERVICE_VENDOR':
         return <span className={`${baseClass} bg-purple-50 text-purple-600 border-purple-100/50`}><Wrench className="w-3.5 h-3.5" /> Service Tech</span>;
-      case 'HYBRID_VENDOR':
-        return <span className={`${baseClass} bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-transparent shadow-emerald-500/20`}><Layers className="w-3.5 h-3.5" /> Hybrid Pro</span>;
+      case 'HYBRID_VENDOR': {
+        const ports = vendor?.numberOfPorts || 2;
+        return (
+          <div className="flex flex-col gap-1.5">
+            <span className={`${baseClass} bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-transparent shadow-emerald-500/20`}>
+              <Layers className="w-3.5 h-3.5" /> Hybrid – {ports} Ports
+            </span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">1 Station · 1 Vendor</span>
+          </div>
+        );
+      }
       default:
         return null;
     }
   };
 
   const tabs = [
-    { id: 'ALL', label: 'All Partners', count: vendors.length },
     { id: 'PENDING', label: 'Pending Audit', count: vendors.filter(v => v.status === 'PENDING').length, notify: true },
     { id: 'ACTIVE', label: 'Active Network', count: vendors.filter(v => v.status === 'ACTIVE').length },
     { id: 'REJECTED', label: 'Rejected', count: vendors.filter(v => v.status === 'REJECTED').length },
@@ -111,7 +178,7 @@ const VendorManagement = () => {
   ];
 
   return (
-    <div className="p-10 max-w-[1700px] mx-auto min-h-screen space-y-10">
+    <div className="p-4 md:p-10 max-w-[1700px] mx-auto min-h-screen space-y-6 md:space-y-10">
       <Toaster position="bottom-right" />
 
       {/* Header Section */}
@@ -130,29 +197,34 @@ const VendorManagement = () => {
                 </div>
               </div>
               <p className="text-slate-500 font-bold tracking-wide uppercase text-xs flex items-center gap-2">
-                Centralized Control Panel <ChevronRight className="w-3 h-3 text-slate-300" /> Partner Onboarding & Compliance Audit
+                Centralized Control Panel <ChevronRight className="w-3 h-3 text-slate-300" /> 1 Vendor = 1 Station · Onboarding & Compliance
+              </p>
+              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1 flex items-center gap-1.5">
+                <Building2 className="w-3 h-3" />
+                Approving a vendor automatically activates their single charging station
               </p>
             </div>
           </div>
         </div>
 
         <div className="flex gap-4 w-full xl:w-auto">
-          <button className="flex-1 xl:flex-none bg-white border-2 border-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-200 transition-all shadow-sm group">
-            <Download className="w-5 h-5 text-slate-400 group-hover:text-slate-900 transition-colors" /> Export Database
-          </button>
-          <button className="flex-1 xl:flex-none bg-[#10b981] text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_12px_30px_-10px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-95 transition-all">
-            + Quick Add Vendor
+          <button 
+            onClick={() => setRegisterModalOpen(true)}
+            className="flex-1 xl:flex-none bg-[#10b981] text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_12px_30px_-10px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+          >
+            <PlusCircle className="w-5 h-5" />
+            Register Vendor + Station
           </button>
         </div>
       </div>
 
       {/* Tabs Container */}
-      <div className="bg-slate-100 p-2.5 rounded-[2.5rem] flex flex-wrap gap-3 border border-slate-200">
+      <div className="bg-slate-100 p-2 rounded-3xl md:rounded-[2.5rem] flex flex-col sm:flex-row gap-2 md:gap-3 border border-slate-200">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 min-w-[200px] px-8 py-5 rounded-[1.75rem] font-black text-sm uppercase tracking-widest transition-all relative flex items-center justify-center gap-4 ${activeTab === tab.id
+            className={`flex-1 min-w-0 sm:min-w-[200px] px-4 sm:px-8 py-3 sm:py-5 rounded-2xl sm:rounded-[1.75rem] font-black text-[10px] sm:text-sm uppercase tracking-widest transition-all relative flex items-center justify-center gap-2 sm:gap-4 ${activeTab === tab.id
                 ? 'bg-[#10b981] text-white shadow-xl shadow-emerald-500/30 scale-[1.02]'
                 : 'text-slate-500 hover:bg-white hover:text-slate-900'
               }`}
@@ -177,7 +249,7 @@ const VendorManagement = () => {
           <input
             type="text"
             placeholder="Search by Business Name, Owner, or Email ID..."
-            className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-7 pl-28 pr-8 focus:outline-none focus:border-[#10b981] focus:ring-[12px] focus:ring-emerald-500/5 transition-all font-black text-slate-900 text-xl placeholder:text-slate-300 placeholder:font-bold shadow-sm"
+            className="w-full bg-white border-2 border-slate-100 rounded-2xl md:rounded-[2rem] py-4 md:py-7 pl-20 md:pl-28 pr-8 focus:outline-none focus:border-[#10b981] focus:ring-[12px] focus:ring-emerald-500/5 transition-all font-black text-slate-900 text-sm md:text-xl placeholder:text-slate-300 placeholder:font-bold shadow-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -193,7 +265,7 @@ const VendorManagement = () => {
             <Filter className="w-6 h-6 text-slate-400 group-focus-within:text-[#10b981]" />
           </div>
           <select 
-            className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-7 pl-20 pr-12 focus:outline-none focus:border-[#10b981] transition-all font-black text-slate-900 uppercase tracking-widest text-sm appearance-none cursor-pointer shadow-sm text-center"
+            className="w-full bg-white border-2 border-slate-100 rounded-2xl md:rounded-[2rem] py-4 md:py-7 pl-16 md:pl-20 pr-12 focus:outline-none focus:border-[#10b981] transition-all font-black text-slate-900 uppercase tracking-widest text-xs md:text-sm appearance-none cursor-pointer shadow-sm text-center"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
           >
@@ -223,9 +295,9 @@ const VendorManagement = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-900 border-b border-slate-800">
-                  <th className="px-10 py-10 text-[13px] font-black text-slate-100 uppercase tracking-[0.25em]">Partner Identity</th>
+                  <th className="px-10 py-10 text-[13px] font-black text-slate-100 uppercase tracking-[0.25em]">Vendor / Station Name</th>
                   <th className="px-10 py-10 text-[13px] font-black text-slate-100 uppercase tracking-[0.25em]">Contact Authority</th>
-                  <th className="px-10 py-10 text-[13px] font-black text-slate-100 uppercase tracking-[0.25em]">Vertical</th>
+                  <th className="px-10 py-10 text-[13px] font-black text-slate-100 uppercase tracking-[0.25em]">Station Type</th>
                   <th className="px-10 py-10 text-[13px] font-black text-slate-100 uppercase tracking-[0.25em]">Enrollment Date</th>
                   <th className="px-10 py-10 text-[13px] font-black text-slate-100 uppercase tracking-[0.25em]">Status</th>
                   <th className="px-10 py-10 text-[13px] font-black text-slate-100 uppercase tracking-[0.25em] text-right">Administrative Actions</th>
@@ -248,7 +320,7 @@ const VendorManagement = () => {
                        <p className="text-base font-bold text-slate-400 mt-1">{vendor.email}</p>
                     </td>
                     <td className="px-10 py-10">
-                      {getRoleBadge(vendor.role)}
+                      {getRoleBadge(vendor.role, vendor)}
                     </td>
                     <td className="px-10 py-10">
                       <p className="text-lg font-black text-slate-500 tabular-nums">
@@ -277,23 +349,6 @@ const VendorManagement = () => {
                           <Eye className="w-6 h-6 group-hover/btn:scale-110 transition-transform" />
                           <span className="text-[11px] font-black uppercase tracking-widest hidden xl:block">Review Profile</span>
                         </button>
-
-                        {vendor.status === 'PENDING' && (
-                          <div className="flex items-center gap-3 pl-4 border-l border-slate-100">
-                            <button
-                              onClick={() => handleStatusUpdate(vendor._id, 'ACTIVE')}
-                              className="p-4 bg-emerald-50 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-2xl transition-all border border-emerald-100 hover:shadow-xl group/btn"
-                            >
-                              <CheckCircle className="w-6 h-6 group-hover/btn:scale-110 transition-transform" />
-                            </button>
-                            <button
-                              onClick={() => handleStatusUpdate(vendor._id, 'REJECTED')}
-                              className="p-4 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all border border-red-100 hover:shadow-xl group/btn"
-                            >
-                              <XCircle className="w-6 h-6 group-hover/btn:scale-110 transition-transform" />
-                            </button>
-                          </div>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -312,7 +367,7 @@ const VendorManagement = () => {
             <h3 className="text-3xl font-black text-slate-900 tracking-tighter mb-4">No Partners Found</h3>
             <p className="text-slate-500 font-bold max-w-md text-lg leading-relaxed mb-10">We couldn't find any vendors matching your current search parameters or category filters.</p>
             <button
-              onClick={() => { setActiveTab('ALL'); setSearchQuery(''); setTypeFilter('ALL'); }}
+              onClick={() => { setActiveTab('PENDING'); setSearchQuery(''); setTypeFilter('ALL'); }}
               className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all"
             >
               Reset All Filters
@@ -328,9 +383,22 @@ const VendorManagement = () => {
         vendor={selectedVendor}
         onApprove={(id) => handleStatusUpdate(id, 'ACTIVE')}
         onReject={(id) => handleStatusUpdate(id, 'REJECTED')}
+        onSuspend={(id) => handleStatusUpdate(id, 'SUSPENDED')}
+        onDelete={(id) => handleDeleteVendor(id)}
+      />
+
+      {/* Instant Registration Modal */}
+      <RegisterVendorModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setRegisterModalOpen(false)}
+        onRegisterSuccess={() => {
+          fetchVendors();
+          setActiveTab('ACTIVE'); // Switch to active tab to see the new vendor
+        }}
       />
     </div>
   );
 };
 
 export default VendorManagement;
+

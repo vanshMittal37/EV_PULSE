@@ -1,7 +1,7 @@
 import React from 'react';
 
-const VendorPerformanceTable = () => {
-  const vendors = [
+const VendorPerformanceTable = ({ data = [] }) => {
+  const vendors = data.length > 0 ? data : [
     { name: 'ChargePoint India', location: 'Delhi NCR', performance: 98, status: 'Elite' },
     { name: 'Tata Power EZ', location: 'Mumbai', performance: 94, status: 'Elite' },
     { name: 'PowerUp Solutions', location: 'Bengaluru', performance: 88, status: 'Pro' },

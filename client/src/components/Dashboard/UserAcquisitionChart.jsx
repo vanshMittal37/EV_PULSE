@@ -1,8 +1,8 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const UserAcquisitionChart = () => {
-  const data = [
+const UserAcquisitionChart = ({ data: chartData = [] }) => {
+  const data = chartData.length > 0 ? chartData : [
     { week: 'W1', users: 400 },
     { week: 'W2', users: 300 },
     { week: 'W3', users: 600 },

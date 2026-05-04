@@ -24,6 +24,8 @@ const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   'http://localhost:3000',      // Alternate dev port
   'http://localhost:8081',      // React Native / Expo
+  'http://127.0.0.1:5173',      // IPv4 localhost
+  'http://192.168.*.*:*',       // Local network access
   'exp://192.168.*.*:8081',     // Expo on local network
 ];
 
@@ -31,15 +33,21 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.some((allowed) => {
+    
+    const isAllowed = allowedOrigins.some((allowed) => {
       if (allowed.includes('*')) {
         const regex = new RegExp('^' + allowed.replace(/\*/g, '.*') + '$');
         return regex.test(origin);
       }
       return allowed === origin;
-    })) {
+    });
+
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.error(`🛑 CORS Blocked: Origin "${origin}" not in allowed list.`);
+      // In development, we can be more permissive if needed, 
+      // but let's log it first to see what's happening.
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -47,6 +55,7 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
+
 
 app.use(cors(corsOptions));
 
@@ -94,6 +103,12 @@ app.use(express.urlencoded({ extended: true }));
 // ─── API Routes ─────────────────────────────────────────────────────────────────
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/jobs', require('./routes/jobRoutes'));
+app.use('/api/sos', require('./routes/sosRoutes'));
+app.use('/api/charging', require('./routes/chargingRoutes'));
+app.use('/api/service', require('./routes/serviceRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/payouts', require('./routes/payoutRoutes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
